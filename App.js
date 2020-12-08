@@ -1,5 +1,7 @@
 import React from 'react';
-import { StyleSheet, Text, View, Alert } from 'react-native';
+import { Alert } from 'react-native';
+import Loading from './Loading'
+import Weather from './Weather'
 import * as Location from 'expo-location';
 import axios from 'axios';
 
@@ -7,37 +9,31 @@ import axios from 'axios';
 export default class extends React.Component {
 
   state = {
-    isLoading: true
+    isLoading: true,
+    // location: ''
   }
 
 
   getWeather = async (latitude, longitude) => {
-    const API_KEY = '';
-    const apiUrl = `http://api.openweathermap.org/data/2.5/weather?lat=${latitude}&lon=${longitude}&appid=${API_KEY}`
-    const { data } = await axios.get(apiUrl);
-    console.log('data : ', data)
+    const API_KEY = '658b24ffb8aeaee672509e6dbd657db0';
+    const apiUrl = `http://api.openweathermap.org/data/2.5/weather?lat=${latitude}&lon=${longitude}&appid=${API_KEY}&units=metric`
+    const { 
+      data: { 
+        main: {temp},
+        weather
+      } 
+    } = await axios.get(apiUrl);
+    console.log(weather) //weather 은 배열임
+    this.setState({ 
+      isLoading: false, 
+      temp, 
+      condition: "Clear"
+    });
   }
 
   getLocation = async () => {
     try {
       await Location.requestPermissionsAsync(); //사용자로 부터 승인 받기
-
-      // Object {
-      //   "coords": Object {
-      //     "accuracy": 65,
-      //     "altitude": 50.53983688354492,
-      //     "altitudeAccuracy": 10,
-      //     "heading": -1,
-      //     "latitude": 37.49821204036994,
-      //     "longitude": 126.93320727287936,
-      //     "speed": -1,
-      //   },
-      //   "timestamp": 1607343791996.7961,
-      // }
-      
-      // const {
-      //   coords: { latitude, longitude }
-      // } = await Location.getCurrentPositionAsync();
 
       const { coords } = await Location.getCurrentPositionAsync();
       this.getWeather(coords.latitude, coords.longitude);
@@ -47,7 +43,6 @@ export default class extends React.Component {
       console.log(err);
       Alert.alert("Can't find you", "So sad");
     }
-    
   }
 
   componentDidMount() {
@@ -56,12 +51,8 @@ export default class extends React.Component {
 
   render() {
 
-    const isLoading = this.state;
+    const { isLoading, temp, condition } = this.state;
 
-    return isLoading ? (
-      <View style={styles.container}>
-        <Text style={styles.text}>Hello!</Text>
-      </View>
-    ) : null;
+    return ( isLoading ?  <Loading /> : <Weather temp={Math.round(temp)} condition={condition} /> );
   }
 }
